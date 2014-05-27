@@ -85,11 +85,65 @@ class Ant(Ant_Colony):
 		self.route = list()
 		self.chose_start_center()
 		self.weight = 0
-		self.time = EARLIST_TIME 
+		self.earlist_time = EARLIST_TIME
+		self.time = self.earlist_time
 
 	def chose_start_center(self,point_list):
 		rand = random.randint(0,HAS_CENTER-1)
 		self.route.append(rand)
+
+    def travel(self,Point_list):
+		i = 0
+	    travel_sum = 0
+	    while( i<len(self.rout)-1 ): 
+	        dis = self.distance( Point_list[self.rout[i]],Point_list[self.rout[i+1]] )
+	        travel_sum += dis*3*1.3
+	        i += 1
+	    return travel_sum
+            
+    def time_window(self,point1,point2,Point_list):
+        self.time = self.earlist_time
+        self.cost = 0
+        #self.extra_car = 0
+        i = 0
+        #print self.rout[i]
+        #print self.rout[i+1]
+        self.temp_time = self.time + Point_list[point1].work_time + self.distance(Point_list[point1],Point_list[point2) / Static.CAR_SPEED
+        #print Point_list[self.rout[i+1]].work_time
+        self.time = self.temp_time
+        if self.time > 18:
+            self.extra_car = self.extra_car + 1
+            self.time = self.earlist_time
+            continue
+        elif self.time < ( Point_list[point2].et - 2 ) or self.time > ( Point_list[point2].lt + 2 ):
+            '''
+            print self.rout
+            print Point_list[self.rout[i]].id,'  and  ',Point_list[self.rout[i+1]].id,'is our of time'
+            print self.temp_time
+            print 'et-2 is:',Point_list[self.rout[i+1]].et - 2
+            print 'lt + 2is:',Point_list[self.rout[i+1]].lt + 2
+            print 'OUT'''
+            return Static.MAX
+        elif self.time < (Point_list[point2].et):
+            self.cost += abs(Point_list[point2].et - self.time) * C
+        elif self.time > (Point_list[self.rout[point2]].lt):
+            self.cost += abs(Point_list[self.rout[point2]].lt - self.time) * C
+        #print 'self time is'
+        #print self.time
+    return self.cost
+
+    def car_cast(self):
+        return 400*self.car 
+
+    def driver_cast(self):
+        if self.extra_car >= 1:
+            cast = ( (18-6-8) + (self.extra_car-1)*(18-6-8) + (self.time - 8 - self.earlist_time) ) * 30
+        else :
+            cast = (self.time-8-self.earlist_time) * 30
+        if cast > 0:
+            return cast
+        else :
+            return 0
 
 	def chose_direct(self,point_list,father_route):
 		now_is = self.route[len(self.route) - 1]
@@ -134,7 +188,7 @@ class Ant(Ant_Colony):
 		
 
 	def qifa_func(self,point1,point2):
-		return 1 / (distance(point1,point2))
+		return 1 / (distance(point1,point2)) 
 
 
 	def ant_cycle(self,i,j):
@@ -184,7 +238,7 @@ point_list.append(p2)
 p3 = Point(-14.639,29.633,0,0,6.0,18,3)
 
 point_list.append(p3)
-
+ 
 p4 = Point(16.049,-3.934,0,0,6.0,18,4)
 
 point_list.append(p4)
