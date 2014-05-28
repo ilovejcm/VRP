@@ -5,219 +5,282 @@ import copy
 import operator
 
 class Point(object):
-	def __init__(self,x,y,weight,work_time,et,lt,point_id):
-		self.x = x
-		self.y = y
-		self.weight = weight
-		self.work_time = work_time
-		self.et = et
-		self.lt = lt
-		self.id = point_id
+    def __init__(self,x,y,weight,work_time,et,lt,point_id):
+        self.x = x
+        self.y = y
+        self.weight = weight
+        self.work_time = work_time
+        self.et = et
+        self.lt = lt
+        self.id = point_id
 
 class Static(object):
-	MAX_WEIGHT_FOR_CAR = 30
-	CAR_SPEED = 70
-	MAX = 1000000
-	C = 50
-	MAX_CAR = 7
-	HAS_CENTER = 6
-	EARLIST_TIME = 6
-	LAST_TIME = 18
+    MAX_WEIGHT_FOR_CAR = 30
+    CAR_SPEED = 70
+    MAX = 1000000
+    C = 50
+    MAX_CAR = 7
+    HAS_CENTER = 6
+    EARLIST_TIME = 6
+    LAST_TIME = 18
 
-	Q = 1 	
-	WEIGHT_FOR_INFO = 3 	
-	WEIGHT_FOR_QIFA = 9		
-	LOSE_INFO = 0.5 		
-	POINT_NUMBER = 78 		
-	
-	@staticmethod
-	def distance(point1,point2,point_list):
-		point_1 = point_list[point1-1]
-		point_2 = point_list[point2-1]
-		x1 = point_1.x
-		y1 = point_1.y
-		x2 = point_2.x
-		y2 = point_2.y
-		return math.sqrt( pow(x1-x2,2)+pow(y1-y2,2) )
-	
-information = [[0 for i in range(Static.POINT_NUMBER)] for j in range(Static.POINT_NUMBER)]
+    Q = 1   
+    WEIGHT_FOR_INFO = 3     
+    WEIGHT_FOR_QIFA = 9     
+    LOSE_INFO = 0.5         
+    POINT_NUMBER = 78       
+    
+    @staticmethod
+    def distance(point1,point2,point_list):
+        point_1 = point_list[int(point1)-1]
+        point_2 = point_list[int(point2)-1]
+        x1 = point_1.x
+        y1 = point_1.y
+        x2 = point_2.x
+        y2 = point_2.y
+        return math.sqrt( pow(x1-x2,2)+pow(y1-y2,2) )
+    
+information = [[1 for i in range(Static.POINT_NUMBER)] for j in range(Static.POINT_NUMBER)]
+i = 0
+while(i<Static.POINT_NUMBER):
+    information[i][i] = 0
+    i += 1
 
 def update():
-	Static.information = [ [i*(1-Static.LOSE_INFO) for i in Static.information[j]] for j in range(len(Static.information)) ] 
+    information = [ [i*(1-Static.LOSE_INFO) for i in information[j]] for j in range(len(information)) ] 
 
 
 class Ant_Colony(object):
-	def __init__(self):
-		self.route = list()
-		self.child = list()
-		i = 0
-		while (i < MAX_CAR):
-			child = Ant()
-			self.child.append(child)
+    def __init__(self):
+        self.route = list()
+        self.child = list()
+        i = 0
+        while (i < Static.MAX_CAR):
+            child = Ant(point_list)
+            self.child.append(child)
+            i += 1
 
-	def lets_crazy(self,point_list):
-		home = 0
-		for i in self.child:			
-			while (i.time < LAST_TIME):
-				temp = i.time
-				weight = i.weight
-				while (i.weight < MAX_WEIGHT_FOR_CAR):
-					one = i.chose_direct(point_list,self.route)
-					i.route.append(one)
-					i.weight += point_list[one].weight
+    def lets_crazy(self,point_list):
+        home = 0
+        pltemp = range(0,Static.HAS_CENTER-1)
+        for i in self.child:
+           # print "new :"
+            cent = i.chose_start_center(pltemp)
+            pltemp.remove(cent)
+            while (i.time < Static.LAST_TIME):
+                temp = i.time
+                weight = i.weight
+                while (i.weight < Static.MAX_WEIGHT_FOR_CAR):
+                    one = i.chose_direct(point_list,self.route)
+                    print '#######################################'
+                    print type(one)
+                    i.route.append(one)
+                    i.weight += point_list[one].weight
 
-				#i.route.pop()
-				home = i.go_home()
-				if home == -1:
-					while(self.route[len(self.route)-1] not in [0,1,2,3,4,5]):
-						self.route.pop()
-					i.time = temp
-					i.weight = weight
-					break 
-				else:
-					i.route.append(home)
-					i.time = i.time + point_list[i.route[len(i.route)-1]].work_time + self.distance(i.route[len(i.route)-1],home) / CAR_SPEED
+                #i.route.pop()
+                home = i.go_home(point_list)
+                if home == -1:
+                    while(self.route[len(self.route)-1] not in [0,1,2,3,4,5]):
+                        self.route.pop()
+                    i.time = temp
+                    i.weight = weight
+                    break 
+                else:
+                    i.route.append(home)
+                    i.time = i.time + point_list[i.route[len(i.route)-1]].work_time + self.distance(i.route[len(i.route)-1],home) / CAR_SPEED
 
 
 class Ant(Ant_Colony):
-	def __init__(self):
-		#self.forbiden = list()
-		self.route = list()
-		self.chose_start_center()
-		self.weight = 0
-		self.earlist_time = EARLIST_TIME
-		self.time = self.earlist_time
+    def __init__(self,point_list):
+        #self.forbiden = list()
+        self.route = list()
+        #self.chose_start_center(point_list)
+        self.weight = 0
+        self.earlist_time = Static.EARLIST_TIME
+        self.time = self.earlist_time
 
-	def chose_start_center(self,point_list):
-		rand = random.randint(0,HAS_CENTER-1)
-		self.route.append(rand)
+    def chose_start_center(self,point_list):
+        rand = random.choice(point_list)
+        #print type(rand)
+        self.route.append(rand)
+        return rand
 
+    
     def travel(self,Point_list):
-		i = 0
-	    travel_sum = 0
-	    while( i<len(self.rout)-1 ): 
-	        dis = self.distance( Point_list[self.rout[i]],Point_list[self.rout[i+1]] )
-	        travel_sum += dis*3*1.3
-	        i += 1
-	    return travel_sum
-            
+        i = 0
+        travel_sum = 0
+        while( i<len(self.rout)-1 ): 
+            dis = self.distance( Point_list[self.rout[i]],Point_list[self.rout[i+1]],point_list)
+            travel_sum += dis*3*1.3
+            i += 1
+        return travel_sum
+
     def time_window(self,point1,point2,Point_list):
+        print 'point1: '+str(point1) + '  point2: '+ str(point2)
         self.time = self.earlist_time
         self.cost = 0
         #self.extra_car = 0
         i = 0
         #print self.rout[i]
         #print self.rout[i+1]
-        self.temp_time = self.time + Point_list[point1].work_time + self.distance(Point_list[point1],Point_list[point2) / Static.CAR_SPEED
+        self.temp_time = self.time + Point_list[point1].work_time + Static.distance(point1,point2,point_list) / Static.CAR_SPEED
         #print Point_list[self.rout[i+1]].work_time
         self.time = self.temp_time
+        print 'self.time is'
+        print self.time
+        print 'Point_list[point2].et is: '
+        print Point_list[point2].et
+        print 'Point_list[point2].lt is: '
+        print Point_list[point2].lt
         if self.time > 18:
+        #    print '>18'
             self.extra_car = self.extra_car + 1
             self.time = self.earlist_time
-            continue
+            self.cost = -1
+            return -1
         elif self.time < ( Point_list[point2].et - 2 ) or self.time > ( Point_list[point2].lt + 2 ):
-            '''
-            print self.rout
-            print Point_list[self.rout[i]].id,'  and  ',Point_list[self.rout[i+1]].id,'is our of time'
-            print self.temp_time
-            print 'et-2 is:',Point_list[self.rout[i+1]].et - 2
-            print 'lt + 2is:',Point_list[self.rout[i+1]].lt + 2
-            print 'OUT'''
+         #   print '1'
+            self.cost = Static.MAX
             return Static.MAX
+
+#print self.rout
+#print Point_list[self.rout[i]].id,'  and  ',Point_list[self.rout[i+1]].id,'is our of time'
+#print self.temp_time
+#print 'et-2 is:',Point_list[self.rout[i+1]].et - 2
+#print 'lt + 2is:',Point_list[self.rout[i+1]].lt + 2
+#print 'OUT'''
         elif self.time < (Point_list[point2].et):
-            self.cost += abs(Point_list[point2].et - self.time) * C
-        elif self.time > (Point_list[self.rout[point2]].lt):
-            self.cost += abs(Point_list[self.rout[point2]].lt - self.time) * C
+          #  print '2'
+            self.cost += abs(Point_list[point2].et - self.time) * Static.C
+        elif self.time > (Point_list[point2].lt):
+           # print '3'
+            self.cost += abs(Point_list[point2].lt - self.time) * Static.C
         #print 'self time is'
         #print self.time
-    return self.cost
+        return self.cost
 
     def car_cast(self):
         return 400*self.car 
-
+    
     def driver_cast(self):
         if self.extra_car >= 1:
             cast = ( (18-6-8) + (self.extra_car-1)*(18-6-8) + (self.time - 8 - self.earlist_time) ) * 30
-        else :
+        else:
             cast = (self.time-8-self.earlist_time) * 30
         if cast > 0:
             return cast
         else :
             return 0
 
-	def chose_direct(self,point_list,father_route):
-		now_is = self.route[len(self.route) - 1]
-		point_map = [i for i in range(len(point_list))]
-		leave = list(set(point_list) - set(father_route))
-		right = [0 for i in range(len(point_list))]
-		fenmu = 0
+    def chose_direct(self,point_list,father_route):
+        now_is = self.route[len(self.route) - 1]
+        point_map = [i for i in range(Static.HAS_CENTER,len(point_list))]
+        point_list_map = [i for i in range(len(point_list))]
+        leave = list(set(point_map) - set(father_route))
+        right = [0 for i in range(len(point_list))]
+        fenmu = 0
+        print point_map
+        print '#############################'
+        print leave
+##
+##        for i in point_map:
+##            cost = self.time_window(self.route[len(self.route)-1],i,point_list)
+##            #print 'cost is:'
+##            #print cost
+##            if i in leave:
+##                tao_ij = information[ self.route[len(self.route)-1] ][ i ]
+##                #print 'self.route[len(self.route)-1] is :'
+##                #print self.route[len(self.route)-1]
+##                #print 'i is:'
+##                #print i
+##                qifa = self.qifa_func( self.route[len(self.route)-1] , i ,point_list)
+##                for j in leave:
+##                    tao_is = information[ self.route[len(self.route)-1] ][ j ]
+##                    qifa_is = self.qifa_func( self.route[len(self.route)-1] , j,point_list )
+##                    fenmu += self.tao_and_qifa(tao_is,qifa_is)
+##                    #print 'fenmu is :'
+##                    #print fenmu
+##                print 'lala'
+##                right[i] = self.tao_and_qifa(tao_ij,qifa) / fenmu
+##
+        for i in leave:
+            cost = self.time_window(self.route[len(self.route)-1],i,point_list)
+            tao_ij = information[ self.route[len(self.route)-1] ][ i ]
+            qifa = self.qifa_func( self.route[len(self.route)-1] , i ,point_list)
+            for j in leave:
+                tao_is = information[ self.route[len(self.route)-1] ][ j ]
+                qifa_is = self.qifa_func( self.route[len(self.route)-1] , j,point_list )
+                fenmu += self.tao_and_qifa(tao_is,qifa_is)
+            right[i] = self.tao_and_qifa(tao_ij,qifa) / fenmu
+        
+        print "right is"
+        print right
+        right_final = [i/sum(right) for i in right]
+        dubo = random.random()
+        dubo_now = right_final[0]
+        i = 0
+        while(i<len(right_final) and sum(right_final)):
+            if dubo_now>dubo and i not in father_route:
+                #self.route.append(i)
+                #self.time = self.time + point_list[self.route[len(self.route)-1]].work_time + self.distance(self.route[len(self.route)-1]],i) / CAR_SPEED
+                #self.weight += point_list[i].weight            
+                return i
+            elif i in father_route:
+                right_final[i] = 0
+                i = 0
+                continue
+            else:
+                i += 1
+                dubo_now += right_final[i]
+        i = len(right_final)
+        return i
 
-		for i in point_map:
-			if i not in self.route:
-				tao_ij = Static.information[ self.route[len(self.route)] ][ i ]
-				qifa = qifa_func( self.route[len(self.route)] , i )
-				for j in leave:
-					tao_is = Static.information[ self.route[len(self.route)] ][ j ]
-					qifa_is = qifa_func( self.route[len(self.route)] , j )
-					fenmu += tao_and_qifa(tao_is,qifa_is)
-				self.right[i] = tao_and_qifa(tao_ij,tao_ij) / fenmu
 
-		right_final = [right[i]/sum(right) for i in right]
-		dubo = random.random()
-		dubo_now = right_final[0]
-		i = 0
-		while(i<len(right_final) and sum(right_final)):
-			if dubo_now>dubo and i not in father_route:
-				#self.route.append(i)
-				#self.time = self.time + point_list[self.route[len(self.route)-1]].work_time + self.distance(self.route[len(self.route)-1]],i) / CAR_SPEED
-				#self.weight += point_list[i].weight			
-				return i
-			elif i in father_route:
-				right_final[i] = 0
-				i = 0
-				continue
-			else:
-				i += 1
-				dubo_now += right_final[i]
-		i = len(right_final)
-		return i
+    def tao_and_qifa(self,tao,qifa):
+        return pow(tao,Static.WEIGHT_FOR_INFO)*pow(qifa,Static.WEIGHT_FOR_QIFA)
+        
+
+    def qifa_func(self,point1,point2,point_list):
+        
+        #return 1 / (distance(point1,point2))
+        #print 'dis is '
+        print 'p1: ',
+        print point1,
+        print '         p2: ',
+        print point2
+       # print Static.distance(point1,point2,point_list)
+        if point1==point2:
+            return 0
+        return 1 / (self.cost + Static.distance(point1,point2,point_list))
 
 
-	def tao_and_qifa(tao,qifa):
-		return pow(tao_is,Static.WEIGHT_FOR_INFO)*pow(qifa_is,Static.WEIGHT_FOR_QIFA)
-		
+    def ant_cycle(self,i,j):
+        information[i][j] += Static.Q / distance(i,j)
 
-	def qifa_func(self,point1,point2):
-		return 1 / (distance(point1,point2)) 
-
-
-	def ant_cycle(self,i,j):
-		Static.information[i][j] += Static.Q / distance(i,j)
-
-	def go_home(self):
-		i = self.route[len(self.route)-1]
-		home = dict();
-		for j in range(HAS_CENTER):
-			home[j] = distance(i,j)
-		result = sorted(home.iteritems(),key=lambda a : a[1])
-		sum_temp = sum(home.keys())
-		sum_temp1 = 0
-		for i in result:
-			i[1] = sum_temp / i[1]
-			sum_temp1 += i[1]
-		for i in result:
-			i[1] = i[1] / sum_temp1
-		new_result = sorted(result,key=operator.itergetter(1))
-		time = self.time + point_list[self.route[len(self.route)-1]].work_time + self.distance(self.route[len(self.route)-1],point_list[new_result[0][0]]) / CAR_SPEED
-		s = 0
-		while(time>LAST_TIME):
-			new_result.pop(0)
-			time = self.time + point_list[self.route[len(self.route)-1]].work_time + self.distance(self.route[len(self.route)-1],point_list[new_result[0][0]]) / CAR_SPEED
-			s += 1
-			if s==5:
-				new_result.append([-1,-1])
-				break
-		return new_result[0][0]	
+    def go_home(self,point_list):
+        i = self.route[len(self.route)-1]
+        home = dict();
+        for j in range(Static.HAS_CENTER):
+            home[j] = Static.distance(i,j,point_list)
+        result = sorted(home.iteritems(),key=lambda a : a[1])
+        sum_temp = sum(home.keys())
+        sum_temp1 = 0
+        for i in result:
+            i[1] = sum_temp / i[1]
+            sum_temp1 += i[1]
+        for i in result:
+            i[1] = i[1] / sum_temp1
+        new_result = sorted(result,key=operator.itergetter(1))
+        ##have some problem##time = self.time + point_list[self.route[len(self.route)-1]].work_time + Static.distance(self.route[len(self.route)-1],point_list[new_result[0][0]],point_list) / CAR_SPEED
+        s = 0
+        while(time>Static.LAST_TIME):
+            new_result.pop(0)
+            time = self.time + point_list[self.route[len(self.route)-1]].work_time + Static.distance(self.route[len(self.route)-1],point_list[new_result[0][0]]) / CAR_SPEED
+            s += 1
+            if s==5:
+                new_result.append([-1,-1])
+                break
+        return new_result[0][0] 
 
 ##########################################################################################
 
@@ -535,3 +598,8 @@ p77 = Point(-13.104,62.158,25,0.83,6.5,16.5,77)
 
 point_list.append(p77)
 
+print 'start'
+a = Ant_Colony()
+a.lets_crazy(point_list)
+
+print 'done'
