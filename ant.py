@@ -71,7 +71,8 @@ class Ant_Colony(object):
                     #print '#######################################'
                     #print one
                     i.route.append(one)
-                    i.weight += point_list[one-1].weight
+                    print i.route
+                    i.weight += point_list[one].weight
 
                 #i.route.pop()
                 home = i.go_home(point_list)
@@ -140,7 +141,7 @@ class Ant(Ant_Colony):
             self.time = self.earlist_time
             self.cost = -1
             return -1
-        elif self.time < ( Point_list[point2].et - 2 ) or self.time > ( Point_list[point2].lt + 2 ):
+        elif self.time < ( Point_list[point2-1].et - 2 ) or self.time > ( Point_list[point2-1].lt + 2 ):
          #   print '1'
             self.cost = Static.MAX
             return Static.MAX
@@ -151,12 +152,12 @@ class Ant(Ant_Colony):
 #print 'et-2 is:',Point_list[self.rout[i+1]].et - 2
 #print 'lt + 2is:',Point_list[self.rout[i+1]].lt + 2
 #print 'OUT'''
-        elif self.time < (Point_list[point2].et):
+        elif self.time < (Point_list[point2-1].et):
           #  print '2'
-            self.cost += abs(Point_list[point2].et - self.time) * Static.C
-        elif self.time > (Point_list[point2].lt):
+            self.cost += abs(Point_list[point2-1].et - self.time) * Static.C
+        elif self.time > (Point_list[point2-1].lt):
            # print '3'
-            self.cost += abs(Point_list[point2].lt - self.time) * Static.C
+            self.cost += abs(Point_list[point2-1].lt - self.time) * Static.C
         #print 'self time is'
         #print self.time
         return self.cost
@@ -175,11 +176,11 @@ class Ant(Ant_Colony):
             return 0
 
     def chose_direct(self,point_list,father_route):
-        now_is = self.route[len(self.route) - 1]
-        point_map = [i for i in range(Static.HAS_CENTER,len(point_list)+1)]
-        point_list_map = [i for i in range(len(point_list)+1)]
+        now_is = self.route[len(self.route)-1]
+        point_map = [i for i in range(Static.HAS_CENTER,len(point_list))]
+        point_list_map = [i for i in range(len(point_list))]
         leave = list(set(point_map) - set(father_route) - set(self.route))
-        right = [0 for i in range(len(point_list)+1)]
+        right = [0 for i in range(len(point_list))]
         fenmu = 0
 ##        print point_map
 ##        print '#############################'
@@ -214,7 +215,7 @@ class Ant(Ant_Colony):
                 tao_is = information[ self.route[len(self.route)-1] ][ j ]
                 qifa_is = self.qifa_func( self.route[len(self.route)-1] , j,point_list )
                 fenmu += self.tao_and_qifa(tao_is,qifa_is)
-            right[i-1] = self.tao_and_qifa(tao_ij,qifa) / fenmu
+            right[i] = self.tao_and_qifa(tao_ij,qifa) / fenmu
         
 ##        print "right is"
 ##        print right
@@ -225,20 +226,23 @@ class Ant(Ant_Colony):
 #        print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
 #        print right_final
         print sum(right_final)
+        print right_final
         while(i<len(right_final) and sum(right_final)):
             #print i
-            if dubo_now>dubo and i not in father_route and i not in self.route:
+            dubo_now += right_final[i]
+            if dubo_now>dubo :
+                if i in father_route or i in self.route:
+                    right_final[i-1] = 0
+                    i = Static.HAS_CENTER
+                    continue
                 #self.route.append(i)
                 #self.time = self.time + point_list[self.route[len(self.route)-1]].work_time + self.distance(self.route[len(self.route)-1]],i) / CAR_SPEED
                 #self.weight += point_list[i].weight            
                 return i
-            elif i in father_route or i in self.route:
-                right_final[i-1] = 0
-                i = Static.HAS_CENTER
-                continue
             else:
+
                 i += 1
-                dubo_now += right_final[i-1]
+                
         i = len(right_final)
         return i
 
@@ -261,8 +265,8 @@ class Ant(Ant_Colony):
         return 1 / (self.cost + Static.distance(point1,point2,point_list))
 
 
-    def ant_cycle(self,i,j):
-        information[i][j] += Static.Q / distance(i,j)
+    def ant_cycle(self,i,j,point_list):
+        information[i-1][j-1] += Static.Q / Static.distance(i,j,point_list)
 
     def go_home(self,point_list):
 ##        print 'self route is:  '
@@ -652,6 +656,8 @@ p7 = Point(71.179,12.543,15,0.50,6.5,12.0,7)
 point_list.append(p7)
 
 p8 = Point(31.537,66.638,20,0.67,6.5,10.0,8)
+
+point_list.append(p8)
 
 print 'start'
 Static.POINT_NUMBER = len(point_list)
